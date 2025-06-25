@@ -19,8 +19,8 @@ This Python script scrapes audio tracks from [No Sheet Music](https://www.noshee
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/your-username/nsm-audio-scraper.git
-cd nsm-audio-scraper
+git clone https://github.com/TechPhil/NSMScrape.git
+cd NSMScrape
 ```
 
 ### 2. Set up environment
