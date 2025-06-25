@@ -13,25 +13,37 @@ def format_track_filename(url: str) -> tuple[str, str]:
     from urllib.parse import unquote
     import re
 
-    # Extract the filename
+    # Extract the filename from the URL and decode any %20 etc.
     filename = unquote(url.split("/")[-1])
 
-    # Try to extract album, track, title, composer
-    match = re.search(r"_(NSM\d+)_TK(\d+)_([A-Z0-9_]+)_([A-Za-z]+_[A-Za-z]+)", filename)
+    # Attempt to extract album, track number, title, version (in brackets), composer
+    match = re.search(
+        r"_(NSM\d+)_TK(\d+)_([A-Z0-9_]+)(?:_\(([^)]+)\))?_([A-Za-z]+_[A-Za-z]+)",
+        filename
+    )
+
     if not match:
         return ("Unknown Album", "Unknown Track.mp3")
 
-    album = match.group(1)                     # NSM154
-    track_num = match.group(2)                 # e.g. 010
-    title_raw = match.group(3)                 # e.g. CHEESE_IT
-    composer_raw = match.group(4)              # e.g. Ben_Townsend
+    album = match.group(1)         # e.g. NSM349
+    track_num = match.group(2)     # e.g. 023
+    title_raw = match.group(3)     # e.g. DISCO_POP
+    version_raw = match.group(4)   # e.g. 15_Sec_120BPM_F_Sharp_Minor (optional)
+    composer_raw = match.group(5)  # e.g. Ben_Townsend
 
+    # Format fields nicely
     title = title_raw.replace("_", " ").title()
     composer = composer_raw.replace("_", " ")
+    version = version_raw.replace("_", " ") if version_raw else ""
 
-    filename_formatted = f"{composer} - {title} ({album} TK{track_num}).mp3"
+    # Build filename
+    if version:
+        filename_formatted = f"{composer} - {title} ({version}) ({album} TK{track_num}).mp3"
+    else:
+        filename_formatted = f"{composer} - {title} ({album} TK{track_num}).mp3"
 
     return album, filename_formatted
+
 
 
 
@@ -104,8 +116,7 @@ for idx, url in enumerate(audio_urls):
         os.makedirs(album_dir, exist_ok=True)
         print(f"Downloading file {idx+1} from {url}")
         r = requests.get(url)
-        formatted_name = format_track_filename(url)
-        filename = os.path.join("audio_downloads", formatted_name)
+        filename = os.path.join("audio_downloads", album, formatted_name)
         with open(filename, 'wb') as f:
             f.write(r.content)
     except Exception as e:
